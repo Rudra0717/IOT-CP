@@ -1,0 +1,110 @@
+networks:
+  ev-fleet-net:
+    driver: bridge
+
+services:
+  # ─────────────────────────────────────────────
+  # MQTT Broker — Eclipse Mosquitto
+  # ─────────────────────────────────────────────
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: ev_mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_logs:/mosquitto/log
+    restart: unless-stopped
+    networks:
+      - ev-fleet-net
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_pub -h localhost -p 1883 -t healthcheck -m ping || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  # ─────────────────────────────────────────────
+  # EV Fleet Simulator
+  # ─────────────────────────────────────────────
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    container_name: ev_simulator
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      FLEET_ID: fleet_001
+      FLEET_SIZE: "10"
+      PUBLISH_INTERVAL: "3"
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    networks:
+      - ev-fleet-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  # ─────────────────────────────────────────────
+  # Backend — FastAPI + SQLite
+  # ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ev_backend
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      DATABASE_URL: "sqlite:////app/data/fleet.db"
+      PUBLISH_INTERVAL: "3"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+    restart: unless-stopped
+    networks:
+      - ev-fleet-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  # ─────────────────────────────────────────────
+  # Frontend — Next.js Dashboard
+  # ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ev_frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: "http://localhost:8000"
+      NEXT_PUBLIC_WS_URL: "ws://localhost:8000"
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - ev-fleet-net
+
+volumes:
+  mosquitto_data:
+  mosquitto_logs:
