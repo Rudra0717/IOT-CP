@@ -293,7 +293,7 @@ export default function Dashboard() {
             )}
 
             {activeTab === 'map' && (
-              <div className="bg-surface/90 border border-border/80 rounded-xl p-4 backdrop-blur-sm shadow-xl flex flex-col gap-3 min-h-[540px]">
+              <div className="bg-surface/90 border border-border/80 rounded-xl p-4 backdrop-blur-sm shadow-xl flex flex-col gap-3">
                 <div className="flex items-center justify-between text-xs border-b border-border/60 pb-2">
                   <span className="font-semibold text-text-primary flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-accent-blue" /> New Delhi Delivery Route Telemetry
@@ -302,7 +302,7 @@ export default function Dashboard() {
                     Click any vehicle node on the map to inspect its IoT architecture
                   </span>
                 </div>
-                <div className="flex-1 rounded-xl overflow-hidden border border-border min-h-[480px]">
+                <div className="w-full h-[540px] rounded-xl overflow-hidden border border-border relative">
                   <FleetMap
                     vehicles={vehicles}
                     onVehicleClick={handleSelectVehicle}

@@ -655,7 +655,7 @@ export default function EVEnvironment({
             </div>
 
             {/* Mini Map Preview with Live Trail & Auto Center */}
-            <div className="lg:col-span-7 bg-surface/90 border border-border/80 rounded-xl p-3 backdrop-blur-sm overflow-hidden flex flex-col gap-2 min-h-[300px]">
+            <div className="lg:col-span-7 bg-surface/90 border border-border/80 rounded-xl p-3 backdrop-blur-sm overflow-hidden flex flex-col gap-2">
               <div className="flex items-center justify-between px-2 pt-1 text-xs">
                 <span className="font-semibold text-text-primary flex items-center gap-1">
                   <Navigation className="w-3.5 h-3.5 text-accent-blue" /> Live Spatial Position & Route Path
@@ -664,7 +664,7 @@ export default function EVEnvironment({
                   Waypoints Tracked: {gpsTrail.length}
                 </span>
               </div>
-              <div className="flex-1 rounded-lg overflow-hidden border border-border min-h-[280px]">
+              <div className="w-full h-[330px] rounded-lg overflow-hidden border border-border relative">
                 <MiniFleetMap
                   vehicles={[vehicle]}
                   trail={gpsTrail}
